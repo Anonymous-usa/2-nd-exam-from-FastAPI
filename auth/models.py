@@ -22,7 +22,7 @@ class User(BaseModel):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
-    username: Mapped[str] = mapped_column(String(100), nullable= False)
+    username: Mapped[str] = mapped_column(String(100), unique=True, nullable= False)
     email: Mapped[str] = mapped_column(String(50),nullable=False )
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
