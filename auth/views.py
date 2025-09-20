@@ -4,17 +4,18 @@
 # • Update: Обновление информации о пользователе.
 # • Delete: Удаление учетной записи.
 
+from fastapi.security import HTTPBearer
 from .models import User
 from fastapi import APIRouter, Depends, HTTPException, status
 from .schemas import UserRegisterSchema, UserLoginSchema, UserSchema
-from .handlers import token_response, generate_token, JWTBearer
+from .handlers import token_response, generate_token, JWTBearer, decode_jwt
 from .utils import hash_password, verify_password, check_user
 from database import get_db
 from sqlalchemy.orm import Session
 
 auth_router = APIRouter()
 
-@auth_router.post("/register", status_code=status.HTTP_201_CREATED, response_model=UserSchema, summary="Register a new user")
+@auth_router.post("/register", status_code=status.HTTP_201_CREATED,  summary="Register a new user")
 async def register_user(user_data: UserRegisterSchema, db: Session = Depends(get_db)):
     existing_user = check_user(user_data)
     if existing_user:
@@ -26,7 +27,7 @@ async def register_user(user_data: UserRegisterSchema, db: Session = Depends(get
     db.refresh(user)
     return {"message": "User registered successfully", "user": user}
 
-@auth_router.post("/login", status_code=status.HTTP_200_OK, response_model=UserSchema,  summary="Login a user")
+@auth_router.post("/login", status_code=status.HTTP_200_OK,   summary="Login a user")
 async def login_user(user_data: UserLoginSchema, db: Session = Depends(get_db)):
     user = check_user(user_data)
     if not user or not verify_password(user_data.password, user.hashed_password):
@@ -35,10 +36,16 @@ async def login_user(user_data: UserLoginSchema, db: Session = Depends(get_db)):
 
 @auth_router.delete("/delete", status_code=status.HTTP_200_OK, dependencies=[Depends(JWTBearer())], summary="Delete a user")
 async def delete_user(db: Session = Depends(get_db), token: str = Depends(JWTBearer())):
-    user_id = token_response(token)
+    decoded_token = decode_jwt(token)
+    if "user_id" not in decoded_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    
+    user_id = decoded_token["user_id"]
     user = db.query(User).filter(User.id == user_id).first()
+
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
     db.delete(user)
     db.commit()
     return {"message": "User deleted successfully"}
@@ -49,12 +56,16 @@ async def logout_user():
 
 @auth_router.get("/me", status_code=status.HTTP_200_OK, response_model=UserSchema, dependencies=[Depends(JWTBearer())])
 async def get_current_user(db: Session = Depends(get_db), token: str = Depends(JWTBearer())):
-    user_id = token_response(token)
+    decoded_token = decode_jwt(token)
+    if "user_id" not in decoded_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    user_id = decoded_token["user_id"]
     user = db.query(User).filter(User.id == user_id).first()
+
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return user
 
+    return user
 
 
 

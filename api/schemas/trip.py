@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field, model_validator, field_validator
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from auth.schemas import UserSchema
 
 class TripCreateSchema(BaseModel):
@@ -13,8 +13,12 @@ class TripCreateSchema(BaseModel):
 
     @field_validator('date')
     def validate_date(cls, value):
-        if value < datetime.utcnow():
+        
+        current_time = datetime.now()  
+
+        if value < current_time:
             raise ValueError("The trip date must be in the future.")
+    
         return value
 
 class TripSchema(TripCreateSchema):

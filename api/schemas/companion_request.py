@@ -12,8 +12,12 @@ class CompanionRequestCreateSchema(BaseModel):
 
     @field_validator('date')
     def validate_date(cls, value):
-        if value < datetime.utcnow():
-            raise ValueError("The request date must be in the future.")
+        
+        current_time = datetime.now()  
+
+        if value < current_time:
+            raise ValueError("The trip date must be in the future.")
+    
         return value
 
 class CompanionRequestSchema(CompanionRequestCreateSchema):

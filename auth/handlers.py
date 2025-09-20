@@ -1,34 +1,41 @@
 import jwt
-import time
 from decouple import config
+from datetime import datetime, timedelta
 from fastapi import HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
 
 JWT_SECRET = config("secret")
 JWT_ALGORITHM = config("algorithm")
 
-def token_response(token:str):
-    return{
+def token_response(token: str):
+    return {
         "access_token": token
     }
 
-def generate_token(user_id:int):
+def generate_token(user_id: int):
+    expiration_time = datetime.utcnow() + timedelta(seconds=6000)
+    
     payload = {
         "user_id": user_id,
-        "expires": time.time() + 6000
-
+        "exp": expiration_time
     }
-    token = jwt.encode(payload, JWT_SECRET, algorithm = JWT_ALGORITHM)
 
+    token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return token_response(token)
 
-def decode_jwt(token:str):
+def decode_jwt(token: str):
     try:
-        decode_token = jwt.decode(token, JWT_SECRET, algorithms = [JWT_ALGORITHM])
-        return decode_token if decode_token["expires"] >= time.time() else None 
-    except:
-        return {}
+        decoded_token = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return decoded_token
+    except jwt.ExpiredSignatureError:
+        return {"error": "Token has expired"}
+    except jwt.InvalidTokenError:
+        return {"error": "Invalid token"}
+    except Exception as e:
+        return {"error": f"An error occurred: {str(e)}"}
+
+
+
 
 
 class JWTBearer(HTTPBearer):

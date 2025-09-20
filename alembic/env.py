@@ -1,8 +1,8 @@
 from logging.config import fileConfig
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 from alembic import context
 from importlib import import_module  # Import importlib for dynamic imports
+from database import DATABASE_URL, BaseModel  # Ensure DATABASE_URL and BaseModel are correctly imported
 
 # This is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -13,10 +13,9 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Add your model's MetaData object here
-# for 'autogenerate' support
-# This ensures that all models are included for migrations
-target_metadata = None  # Will be assigned later
+# Add your model's MetaData object here for 'autogenerate' support.
+# Will be assigned later after models are imported
+target_metadata = None
 
 def import_models():
     """Dynamically import models to avoid circular imports."""
@@ -29,7 +28,8 @@ def import_models():
     from api.models.trip import Trip
     from api.models.companion_request import CompanionRequest
     from auth.models import User
-    from database import BaseModel  # BaseModel will contain the metadata
+
+    # BaseModel will contain the metadata
     target_metadata = BaseModel.metadata
 
 def run_migrations_offline() -> None:
@@ -44,7 +44,6 @@ def run_migrations_offline() -> None:
 
     with context.begin_transaction():
         context.run_migrations()
-
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
@@ -61,7 +60,6 @@ def run_migrations_online() -> None:
 
         with context.begin_transaction():
             context.run_migrations()
-
 
 # Import models before running migrations
 import_models()

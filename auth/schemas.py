@@ -14,7 +14,7 @@ class UserRegisterSchema(BaseModel):
             raise ValueError("All fields  are required")
         return value
 
-    @model_validator("confirm_password", mode="before")
+    @model_validator( mode="before")
     def check_passwords(self):
         if self["password"] != self["confirm_password"]:
             raise ValueError("Passwords do not match")
