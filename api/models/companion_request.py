@@ -15,9 +15,7 @@ from sqlalchemy.orm import Mapped, relationship, mapped_column
 
 from database import BaseModel
 
-def get_user():
-    from auth.models import User
-    return User
+
 
 class CompanionRequest(BaseModel):
     __tablename__ = "companion_requests"
