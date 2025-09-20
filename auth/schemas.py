@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr, Field, model_validator, field_validato
 from typing import Optional
 from datetime import datetime
 
-class UserCreateSchema(BaseModel):
+class UserRegisterSchema(BaseModel):
     username: str = Field(min_length=3, max_length=100)
     email: EmailStr
     password: str = Field(min_length=8)
